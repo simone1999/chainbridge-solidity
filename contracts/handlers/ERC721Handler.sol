@@ -24,7 +24,7 @@ contract ERC721Handler is IDepositExecute, HandlerHelpers, ERC721Safe {
      */
     constructor(
         address bridgeAddress
-    ) public HandlerHelpers(bridgeAddress) {
+    ) HandlerHelpers(bridgeAddress) {
     }
 
     /**

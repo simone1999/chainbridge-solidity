@@ -44,7 +44,7 @@ contract GenericHandler is IGenericHandler {
      */
     constructor(
         address          bridgeAddress
-    ) public {
+    ) {
         _bridgeAddress = bridgeAddress;
     }
 

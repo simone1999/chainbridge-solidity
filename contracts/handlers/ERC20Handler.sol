@@ -17,7 +17,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
      */
     constructor(
         address          bridgeAddress
-    ) public HandlerHelpers(bridgeAddress) {
+    ) HandlerHelpers(bridgeAddress) {
     }
 
     /**
