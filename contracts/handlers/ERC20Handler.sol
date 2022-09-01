@@ -47,6 +47,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         } else {
             lockERC20(tokenAddress, depositer, address(this), amount);
         }
+        return "";
     }
 
     /**
