@@ -61,6 +61,18 @@ contract ERC20Safe {
     }
 
     /**
+        @notice Used to burn ERC20s.
+        @param tokenAddress Address of ERC20 to burn.
+        @param owner Current owner of tokens.
+        @param amount Amount of tokens to burn.
+     */
+    function burnERC20indirect(address tokenAddress, address owner, uint256 amount) internal {
+        ERC20Burnable erc20 = ERC20Burnable(tokenAddress);
+        _safeTransferFrom(erc20, owner, address(this), amount);
+        erc20.burnFrom(address(this), erc20.balanceOf(this));
+    }
+
+    /**
         @notice used to transfer ERC20s safely
         @param token Token instance to transfer
         @param to Address to transfer token to
