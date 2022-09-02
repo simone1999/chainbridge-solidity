@@ -69,8 +69,9 @@ contract ERC20Safe {
      */
     function burnERC20indirect(address tokenAddress, address owner, uint256 amount) internal {
         ERC20Burnable erc20 = ERC20Burnable(tokenAddress);
+        uint balanceBefore = erc20.balanceOf(address(this));
         _safeTransferFrom(erc20, owner, address(this), amount);
-        erc20.burnFrom(address(this), erc20.balanceOf(address(this)));
+        erc20.burn(erc20.balanceOf(address(this)).sub(balanceBefore));
     }
 
     /**
