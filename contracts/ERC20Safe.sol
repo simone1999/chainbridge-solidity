@@ -21,9 +21,11 @@ contract ERC20Safe {
         @param recipient Address to transfer tokens to.
         @param amount Amount of tokens to transfer.
      */
-    function lockERC20(address tokenAddress, address owner, address recipient, uint256 amount) internal {
+    function lockERC20(address tokenAddress, address owner, address recipient, uint256 amount) internal{
         IERC20 erc20 = IERC20(tokenAddress);
+        uint balanceBefore = erc20.balanceOf(address(this));
         _safeTransferFrom(erc20, owner, recipient, amount);
+        require(erc20.balanceOf(address(this)).sub(balanceBefore) == amount, "TransferFee Forbidden");
     }
 
     /**
@@ -46,7 +48,6 @@ contract ERC20Safe {
     function mintERC20(address tokenAddress, address recipient, uint256 amount) internal {
         ERC20PresetMinterPauser erc20 = ERC20PresetMinterPauser(tokenAddress);
         erc20.mint(recipient, amount);
-
     }
 
     /**
