@@ -359,7 +359,7 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         address sender = _msgSender();
 
         IDepositExecute depositHandler = IDepositExecute(handler);
-        bytes memory handlerResponse = depositHandler.deposit(resourceID, sender, data);
+        bytes memory handlerResponse = depositHandler.deposit(resourceID, sender, destinationDomainID, data);
 
         emit Deposit(destinationDomainID, resourceID, depositNonce, sender, data, handlerResponse);
     }

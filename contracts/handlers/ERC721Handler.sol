@@ -42,6 +42,7 @@ contract ERC721Handler is IDepositExecute, HandlerHelpers, ERC721Safe {
      */
     function deposit(bytes32    resourceID,
                     address     depositer,
+                    uint8       destinationDomainID,
                     bytes       calldata data
                     ) external override onlyBridge returns (bytes memory metaData) {
         uint         tokenID;

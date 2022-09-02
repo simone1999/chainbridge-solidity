@@ -34,6 +34,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
     function deposit(
         bytes32 resourceID,
         address depositer,
+        uint8 destinationDomainID,
         bytes   calldata data
     ) external override onlyBridge returns (bytes memory) {
         uint256        amount;
