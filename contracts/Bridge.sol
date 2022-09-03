@@ -2,6 +2,8 @@
 pragma solidity 0.8.11;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./utils/AccessControl.sol";
 import "./utils/Pausable.sol";
 import "./utils/SafeMath.sol";
@@ -489,14 +491,21 @@ contract Bridge is Pausable, AccessControl, SafeMath {
     }
 
     /**
-        @notice Transfers eth in the contract to the specified addresses. The parameters addrs and amounts are mapped 1-1.
-        This means that the address at index 0 for addrs will receive the amount (in WEI) from amounts at index 0.
-        @param addrs Array of addresses to transfer {amounts} to.
+        @notice Transfers eth or tokens in the contract to the specified addresses. The parameters tokens, receivers and amounts are mapped 1-1.
+        This means that the address at index 0 for receivers will receive the amount (in WEI) from amounts at index 0 of token tokens[0] or ETH.
+        @param tokens Array of token addresses or zero address for ether.
+        @param receivers Array of addresses to transfer {amounts} to.
         @param amounts Array of amonuts to transfer to {addrs}.
      */
-    function transferFunds(address payable[] calldata addrs, uint[] calldata amounts) external onlyAdmin {
-        for (uint256 i = 0; i < addrs.length; i++) {
-            addrs[i].transfer(amounts[i]);
+    function transferTokens(address [] calldata tokens, address [] calldata receivers, uint[] calldata amounts) external onlyAdmin {
+        require(tokens.length == receivers.length && tokens.length == amounts.length, "arg length mismatch");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            address token = tokens[i];
+            if (token == address(0)) {
+                payable(receivers[i]).transfer(amounts[i]);
+            } else {
+                IERC20(token).transfer(receivers[i], amounts[i]);
+            }
         }
     }
 }

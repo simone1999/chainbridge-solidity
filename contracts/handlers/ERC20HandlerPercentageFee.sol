@@ -21,16 +21,11 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
     // fee percentage, 100 = 1%
     uint public _feePercentage;
 
-    // fee receiving address
-    address public _feeTo;
-
-
     /**
         @param bridgeAddress Contract address of previously deployed Bridge.
         @param feePercentage fee percentage for token transfers.
      */
-    constructor(address bridgeAddress, address feeTo, uint feePercentage) HandlerHelpers(bridgeAddress) {
-        _feeTo = feeTo;
+    constructor(address bridgeAddress, uint feePercentage) HandlerHelpers(bridgeAddress) {
         setFeePercentage(feePercentage);
     }
 
@@ -60,7 +55,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         uint256 fee = _calculateFee(tokenAddress, destinationDomainID, amount);
         amount -= fee;
 
-        safeTransferFrom(IERC20(tokenAddress), depositer, _feeTo, fee);
+        safeTransferFrom(IERC20(tokenAddress), depositer, _bridgeAddress, fee);
         if (_burnList[tokenAddress]) {
             burnERC20(tokenAddress, depositer, amount);
         } else {

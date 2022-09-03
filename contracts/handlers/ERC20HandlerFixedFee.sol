@@ -15,16 +15,10 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
     // destination domain id => eth fee
     mapping (uint8 => uint) public _feeChain;
 
-    // fee receiving address
-    address public _feeTo;
-
-
     /**
         @param bridgeAddress Contract address of previously deployed Bridge.
      */
-    constructor(address bridgeAddress, address feeTo) HandlerHelpers(bridgeAddress) {
-        _feeTo = feeTo;
-    }
+    constructor(address bridgeAddress) HandlerHelpers(bridgeAddress) {}
 
     /**
         @notice A deposit is initiatied by making a deposit in the Bridge contract.
@@ -56,7 +50,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         } else {
             lockERC20(tokenAddress, depositer, address(this), amount);
         }
-        payable(_feeTo).transfer(msg.value);
+        payable(_bridgeAddress).transfer(msg.value);
         return "";
     }
 
