@@ -24,7 +24,7 @@ contract ERC20Safe {
     function lockERC20(address tokenAddress, address owner, address recipient, uint256 amount) internal{
         IERC20 erc20 = IERC20(tokenAddress);
         uint balanceBefore = erc20.balanceOf(address(this));
-        _safeTransferFrom(erc20, owner, recipient, amount);
+        safeTransferFrom(erc20, owner, recipient, amount);
         require(erc20.balanceOf(address(this)).sub(balanceBefore) == amount, "TransferFee Forbidden");
     }
 
@@ -36,7 +36,7 @@ contract ERC20Safe {
      */
     function releaseERC20(address tokenAddress, address recipient, uint256 amount) internal {
         IERC20 erc20 = IERC20(tokenAddress);
-        _safeTransfer(erc20, recipient, amount);
+        safeTransfer(erc20, recipient, amount);
     }
 
     /**
@@ -70,7 +70,7 @@ contract ERC20Safe {
     function burnERC20indirect(address tokenAddress, address owner, uint256 amount) internal {
         ERC20Burnable erc20 = ERC20Burnable(tokenAddress);
         uint balanceBefore = erc20.balanceOf(address(this));
-        _safeTransferFrom(erc20, owner, address(this), amount);
+        safeTransferFrom(erc20, owner, address(this), amount);
         erc20.burn(erc20.balanceOf(address(this)).sub(balanceBefore));
     }
 
@@ -80,7 +80,7 @@ contract ERC20Safe {
         @param to Address to transfer token to
         @param value Amount of token to transfer
      */
-    function _safeTransfer(IERC20 token, address to, uint256 value) private {
+    function safeTransfer(IERC20 token, address to, uint256 value) internal {
         _safeCall(token, abi.encodeWithSelector(token.transfer.selector, to, value));
     }
 
@@ -92,7 +92,7 @@ contract ERC20Safe {
         @param to Address to transfer token to
         @param value Amount of token to transfer
      */
-    function _safeTransferFrom(IERC20 token, address from, address to, uint256 value) private {
+    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
         _safeCall(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
     }
 

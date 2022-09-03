@@ -11,13 +11,19 @@ import "../ERC20Safe.sol";
     @author ChainSafe Systems.
     @notice This contract is intended to be used with the Bridge contract.
  */
-contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe {
+contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe {
+    // destination domain id => eth fee
+    mapping (uint8 => uint) public _feeChain;
+
+    // fee receiving address
+    address public _feeTo;
+
+
     /**
         @param bridgeAddress Contract address of previously deployed Bridge.
      */
-    constructor(
-        address          bridgeAddress
-    ) HandlerHelpers(bridgeAddress) {
+    constructor(address bridgeAddress, address feeTo) HandlerHelpers(bridgeAddress) {
+        _feeTo = feeTo;
     }
 
     /**
@@ -34,9 +40,11 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
     function deposit(
         bytes32 resourceID,
         address depositer,
-        uint8 destinationDomainID,
+        uint8   destinationDomainID,
         bytes   calldata data
     ) external override onlyBridge payable returns (bytes memory) {
+        require(msg.value >= _feeChain[destinationDomainID], "Incorrect fee supplied ");
+
         uint256        amount;
         (amount) = abi.decode(data, (uint));
 
@@ -44,10 +52,11 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 
         if (_burnList[tokenAddress]) {
-            burnERC20indirect(tokenAddress, depositer, amount);
+            burnERC20(tokenAddress, depositer, amount);
         } else {
             lockERC20(tokenAddress, depositer, address(this), amount);
         }
+        payable(_feeTo).transfer(msg.value);
         return "";
     }
 
@@ -76,7 +85,7 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
             recipientAddress := mload(add(destinationRecipientAddress, 0x20))
         }
 
-        require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
+        require(_contractWhitelist[tokenAddress], "unhandled token");
 
         if (_burnList[tokenAddress]) {
             mintERC20(tokenAddress, address(recipientAddress), amount);
@@ -105,5 +114,23 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
         } else{
             releaseERC20(tokenAddress, recipient, amount);
         }
+    }
+
+    function calculateFee(
+        bytes32 resourceID,
+        address depositer,
+        uint8   destinationDomainID,
+        bytes   calldata data
+    ) external view override returns (address feeToken, uint256 fee) {
+        address token = _resourceIDToTokenContractAddress[resourceID];
+        require(_contractWhitelist[token], "unhandled token");
+
+        feeToken = address(0);
+        fee = _feeChain[destinationDomainID];
+    }
+
+    function changeFee(bytes memory feeData) external onlyBridge {
+        (uint8 destinationDomainId, uint256 fee) = abi.decode(feeData, (uint8, uint256));
+        _feeChain[destinationDomainId] = fee;
     }
 }

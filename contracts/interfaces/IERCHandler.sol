@@ -23,4 +23,24 @@ interface IERCHandler {
         @param data ABI-encoded withdrawal params relevant to the handler.
      */
     function withdraw(bytes memory data) external;
+
+    /**
+        @notice calculate handler fees for deposit.
+        @param resourceID ResourceID used to find address of handler to be used for deposit.
+        @param depositer user who will call the Bridge deposit.
+        @param destinationDomainID ID of chain deposit will be bridged to.
+        @param data Additional data to be passed to specified handler.
+     */
+    function calculateFee(
+        bytes32 resourceID,
+        address depositer,
+        uint8 destinationDomainID,
+        bytes calldata data
+    ) external view returns (address feeToken, uint256 fee);
+
+    /**
+        @notice Changes fee for handler.
+        @param feeData ABI-encoded fee params relevant to the handler.
+     */
+    function changeFee(bytes memory feeData) external;
 }

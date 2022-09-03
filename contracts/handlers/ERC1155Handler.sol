@@ -29,7 +29,7 @@ contract ERC1155Handler is IDepositExecute, HandlerHelpers, ERC1155Safe, ERC1155
         @param depositer Address of account making the deposit in the Bridge contract.
         @param data Consists of ABI-encoded arrays of tokenIDs and amounts.
      */
-    function deposit(bytes32 resourceID, address depositer, uint8 destinationDomainID, bytes calldata data) external override onlyBridge returns (bytes memory metaData) {
+    function deposit(bytes32 resourceID, address depositer, uint8 destinationDomainID, bytes calldata data) external override onlyBridge payable returns (bytes memory metaData) {
         uint[] memory tokenIDs;
         uint[] memory amounts;
 
@@ -89,6 +89,10 @@ contract ERC1155Handler is IDepositExecute, HandlerHelpers, ERC1155Safe, ERC1155
 
         (tokenAddress, recipient, tokenIDs, amounts, transferData) = abi.decode(data, (address, address, uint[], uint[], bytes));
 
-        releaseBatchERC1155(tokenAddress, address(this), recipient, tokenIDs, amounts, transferData);
+        if (tokenAddress == address(0)) {
+            payable(recipient).transfer(amounts[0]);
+        } else{
+            releaseBatchERC1155(tokenAddress, address(this), recipient, tokenIDs, amounts, transferData);
+        }
     }
 }

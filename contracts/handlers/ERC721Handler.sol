@@ -44,7 +44,7 @@ contract ERC721Handler is IDepositExecute, HandlerHelpers, ERC721Safe {
                     address     depositer,
                     uint8       destinationDomainID,
                     bytes       calldata data
-                    ) external override onlyBridge returns (bytes memory metaData) {
+                    ) external override onlyBridge payable returns (bytes memory metaData) {
         uint         tokenID;
 
         (tokenID) = abi.decode(data, (uint));
@@ -122,6 +122,10 @@ contract ERC721Handler is IDepositExecute, HandlerHelpers, ERC721Safe {
 
         (tokenAddress, recipient, tokenID) = abi.decode(data, (address, address, uint));
 
-        releaseERC721(tokenAddress, address(this), recipient, tokenID);
+        if (tokenAddress == address(0)) {
+            payable(recipient).transfer(tokenID);
+        } else{
+            releaseERC721(tokenAddress, address(this), recipient, tokenID);
+        }
     }
 }

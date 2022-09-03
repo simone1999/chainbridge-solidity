@@ -36,7 +36,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         address depositer,
         uint8 destinationDomainID,
         bytes   calldata data
-    ) external override onlyBridge returns (bytes memory) {
+    ) external override onlyBridge payable returns (bytes memory) {
         uint256        amount;
         (amount) = abi.decode(data, (uint));
 
@@ -100,6 +100,10 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
 
         (tokenAddress, recipient, amount) = abi.decode(data, (address, address, uint));
 
-        releaseERC20(tokenAddress, recipient, amount);
+        if (tokenAddress == address(0)) {
+            payable(recipient).transfer(amount);
+        } else{
+            releaseERC20(tokenAddress, recipient, amount);
+        }
     }
 }
