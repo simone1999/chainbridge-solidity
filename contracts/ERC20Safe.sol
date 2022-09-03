@@ -56,7 +56,7 @@ contract ERC20Safe {
         @param owner Current owner of tokens.
         @param amount Amount of tokens to burn.
      */
-    function burnERC20(address tokenAddress, address owner, uint256 amount) internal {
+    function burnERC20(address tokenAddress, address owner, uint256 amount) internal virtual {
         ERC20Burnable erc20 = ERC20Burnable(tokenAddress);
         erc20.burnFrom(owner, amount);
     }

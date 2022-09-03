@@ -2,16 +2,16 @@
 pragma solidity 0.8.11;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IDepositExecute.sol";
-import "./HandlerHelpers.sol";
-import "../ERC20Safe.sol";
+import "../../interfaces/IDepositExecute.sol";
+import "../HandlerHelpers.sol";
+import "../../ERC20Safe.sol";
 
 /**
     @title Handles ERC20 deposits and deposit executions.
     @author ChainSafe Systems.
     @notice This contract is intended to be used with the Bridge contract.
  */
-contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe {
+contract ERC20HandlerFixedFee is IDepositExecute, HandlerHelpers, ERC20Safe {
     // destination domain id => eth fee
     mapping (uint8 => uint) public _feeChain;
 

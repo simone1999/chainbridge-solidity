@@ -2,7 +2,7 @@
 pragma solidity 0.8.11;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IGenericHandler.sol";
+import "../../interfaces/IGenericHandler.sol";
 
 /**
     @title Handles generic deposits and deposit executions.

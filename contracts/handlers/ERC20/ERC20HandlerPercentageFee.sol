@@ -2,22 +2,31 @@
 pragma solidity 0.8.11;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IDepositExecute.sol";
-import "./HandlerHelpers.sol";
-import "../ERC20Safe.sol";
+import "../../interfaces/IDepositExecute.sol";
+import "../HandlerHelpers.sol";
+import "../../ERC20Safe.sol";
 
 /**
     @title Handles ERC20 deposits and deposit executions.
     @author ChainSafe Systems.
     @notice This contract is intended to be used with the Bridge contract.
  */
-contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe {
+contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe {
+    // token contract address => token minimum fee multiplier
+    mapping (address => uint) public _minFeeMultiplierToken;
+
+    // destination domain id => token minimum fee multiplier
+    mapping (uint8 => uint) public _minFeeMultiplierChain;
+
+    // fee percentage, 100 = 1%
+    uint public _feePercentage;
+
     /**
         @param bridgeAddress Contract address of previously deployed Bridge.
+        @param feePercentage fee percentage for token transfers.
      */
-    constructor(
-        address          bridgeAddress
-    ) HandlerHelpers(bridgeAddress) {
+    constructor(address bridgeAddress, uint feePercentage) HandlerHelpers(bridgeAddress) {
+        setFeePercentage(feePercentage);
     }
 
     /**
@@ -34,7 +43,7 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
     function deposit(
         bytes32 resourceID,
         address depositer,
-        uint8 destinationDomainID,
+        uint8   destinationDomainID,
         bytes   calldata data
     ) external override onlyBridge payable returns (bytes memory) {
         uint256        amount;
@@ -43,8 +52,12 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 
+        uint256 fee = _calculateFee(tokenAddress, destinationDomainID, amount);
+        amount -= fee;
+
+        safeTransferFrom(IERC20(tokenAddress), depositer, _bridgeAddress, fee);
         if (_burnList[tokenAddress]) {
-            burnERC20indirect(tokenAddress, depositer, amount);
+            burnERC20(tokenAddress, depositer, amount);
         } else {
             lockERC20(tokenAddress, depositer, address(this), amount);
         }
@@ -76,7 +89,7 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
             recipientAddress := mload(add(destinationRecipientAddress, 0x20))
         }
 
-        require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
+        require(_contractWhitelist[tokenAddress], "unhandled token");
 
         if (_burnList[tokenAddress]) {
             mintERC20(tokenAddress, address(recipientAddress), amount);
@@ -105,5 +118,57 @@ contract ERC20HandlerIndirectBurn is IDepositExecute, HandlerHelpers, ERC20Safe 
         } else{
             releaseERC20(tokenAddress, recipient, amount);
         }
+    }
+
+    function calculateFee(
+        bytes32 resourceID,
+        address depositer,
+        uint8   destinationDomainID,
+        bytes   calldata data
+    ) external view override returns (address feeToken, uint256 fee) {
+        uint256 amount = abi.decode(data, (uint));
+
+        feeToken = _resourceIDToTokenContractAddress[resourceID];
+        require(_contractWhitelist[feeToken], "unhandled token");
+
+        fee = _calculateFee(feeToken, destinationDomainID, amount);
+    }
+
+    function changeFee(bytes memory feeData) external onlyBridge {
+        uint8 feeType = abi.decode(feeData, (uint8));
+        if (feeType == 0) {
+            uint256 feePercentage;
+            (, feePercentage) = abi.decode(feeData, (uint8, uint256));
+            setFeePercentage(feePercentage);
+        } else if (feeType == 1) {
+            address tokenAddress;
+            uint256 minFeeMultiplierToken;
+            (, tokenAddress, minFeeMultiplierToken) = abi.decode(feeData, (uint8, address, uint256));
+            _minFeeMultiplierToken[tokenAddress] = minFeeMultiplierToken;
+        } else if (feeType == 2) {
+            uint8 destinationDomainId;
+            uint256 minFeeMultiplierChain;
+            (, destinationDomainId, minFeeMultiplierChain) = abi.decode(feeData, (uint8, uint8, uint256));
+            _minFeeMultiplierChain[destinationDomainId] = minFeeMultiplierChain;
+        } else {
+            require(false, "feeType invalid");
+        }
+    }
+
+    function _calculateFee(address tokenAddress, uint8 destinationDomainID, uint256 tokenAmount) internal view returns (uint256 fee) {
+        uint256 minimalFee;
+
+        fee = tokenAmount * _feePercentage / 10000;
+        minimalFee = _minFeeMultiplierToken[tokenAddress] * _minFeeMultiplierChain[destinationDomainID];
+
+        if (minimalFee > fee) {
+            fee = minimalFee;
+            require(fee < tokenAmount, "LT minFee");
+        }
+    }
+
+    function setFeePercentage(uint feePercentage) internal {
+        require(feePercentage >= 0 && feePercentage <= 10000, "invalid fee");
+        _feePercentage = feePercentage;
     }
 }
