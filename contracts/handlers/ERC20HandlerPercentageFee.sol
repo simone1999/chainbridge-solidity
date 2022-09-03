@@ -168,7 +168,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
 
         if (minimalFee > fee) {
             fee = minimalFee;
-            require(fee >= tokenAmount, "LT minFee");
+            require(fee < tokenAmount, "LT minFee");
         }
     }
 
