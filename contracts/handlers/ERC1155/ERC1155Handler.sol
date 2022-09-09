@@ -75,6 +75,18 @@ contract ERC1155Handler is IDepositExecute, HandlerHelpers, ERC1155Safe, ERC1155
         }
     }
 
+    function calculateFee(
+        bytes32 resourceID,
+        address depositer,
+        uint8 destinationDomainID,
+        bytes calldata data
+    ) external view returns (address feeToken, uint256 fee){  // todo: add proper fee handling
+        feeToken = address(0);
+        fee = 0;
+    }
+
+    function changeFee(bytes memory feeData) external {}  // todo: add proper fee handling
+
     /**
         @notice Used to manually release ERC1155 tokens from ERC1155Safe.
         @param data Consists of ABI-encoded {tokenAddress}, {recipient}, {tokenIDs}, 

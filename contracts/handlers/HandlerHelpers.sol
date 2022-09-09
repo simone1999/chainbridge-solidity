@@ -9,7 +9,7 @@ import "../interfaces/IERCHandler.sol";
     @notice This contract is intended to be used with the Bridge contract.
  */
 abstract contract HandlerHelpers is IERCHandler {
-    address public immutable _bridgeAddress;
+    address public _bridgeAddress;
 
     // resourceID => token contract address
     mapping (bytes32 => address) public _resourceIDToTokenContractAddress;
@@ -35,6 +35,10 @@ abstract contract HandlerHelpers is IERCHandler {
         address          bridgeAddress
     ) {
         _bridgeAddress = bridgeAddress;
+    }
+
+    function changeBridgeAddress(address newBridgeAddress) external override onlyBridge {
+        _bridgeAddress = newBridgeAddress;
     }
 
     function _onlyBridge() private view {

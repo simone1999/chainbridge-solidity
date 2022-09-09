@@ -79,6 +79,24 @@ contract HandlerRevert is HandlerHelpers {
     function virtualIncreaseBalance(uint amount) external {
         _totalAmount = amount;
     }
+
+    function calculateFee(
+        bytes32 resourceID,
+        address depositer,
+        uint8 destinationDomainID,
+        bytes calldata data
+    ) external view returns (address feeToken, uint256 fee){
+        feeToken = address(0);
+        fee = 0;
+    }
+
+    /**
+        @notice Changes fee for handler.
+        @param feeData ABI-encoded fee params relevant to the handler.
+     */
+    function changeFee(bytes memory feeData) external {}
+
+    function withdraw(bytes memory data) external {}
 }
 
 contract TestForwarder {

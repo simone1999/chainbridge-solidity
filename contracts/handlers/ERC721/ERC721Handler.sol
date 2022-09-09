@@ -107,6 +107,18 @@ contract ERC721Handler is IDepositExecute, HandlerHelpers, ERC721Safe {
         }
     }
 
+    function calculateFee(
+        bytes32 resourceID,
+        address depositer,
+        uint8 destinationDomainID,
+        bytes calldata data
+    ) external view returns (address feeToken, uint256 fee){  // todo: add proper fee handling
+        feeToken = address(0);
+        fee = 0;
+    }
+
+    function changeFee(bytes memory feeData) external {}  // todo: add proper fee handling
+
     /**
         @notice Used to manually release ERC721 tokens from ERC721Safe.
         @param data Consists of {tokenAddress}, {recipient}, and {tokenID} all padded to 32 bytes.

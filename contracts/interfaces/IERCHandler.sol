@@ -25,6 +25,12 @@ interface IERCHandler {
     function withdraw(bytes memory data) external;
 
     /**
+        @notice changed bridge address.
+        @param newBridgeAddress address of new bridge.
+     */
+    function changeBridgeAddress(address newBridgeAddress) external;
+
+    /**
         @notice calculate handler fees for deposit.
         @param resourceID ResourceID used to find address of handler to be used for deposit.
         @param depositer user who will call the Bridge deposit.

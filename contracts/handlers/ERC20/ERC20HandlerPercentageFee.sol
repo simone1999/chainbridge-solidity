@@ -26,7 +26,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         @param feePercentage fee percentage for token transfers.
      */
     constructor(address bridgeAddress, uint feePercentage) HandlerHelpers(bridgeAddress) {
-        setFeePercentage(feePercentage);
+        _setFeePercentage(feePercentage);
     }
 
     /**
@@ -38,7 +38,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         amount                      uint256     bytes   0 - 32
         @dev Depending if the corresponding {tokenAddress} for the parsed {resourceID} is
         marked true in {_burnList}, deposited tokens will be burned, if not, they will be locked.
-        @return an empty data.
+        @return bytes amount after fees
      */
     function deposit(
         bytes32 resourceID,
@@ -46,8 +46,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         uint8   destinationDomainID,
         bytes   calldata data
     ) external override onlyBridge payable returns (bytes memory) {
-        uint256        amount;
-        (amount) = abi.decode(data, (uint));
+        (uint256 amount) = abi.decode(data, (uint));
 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
@@ -61,7 +60,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         } else {
             lockERC20(tokenAddress, depositer, address(this), amount);
         }
-        return "";
+        return abi.encode(amount);
     }
 
     /**
@@ -75,21 +74,17 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         destinationRecipientAddress            bytes       bytes  64 - END
      */
     function executeProposal(bytes32 resourceID, bytes calldata data) external override onlyBridge {
-        uint256       amount;
-        uint256       lenDestinationRecipientAddress;
-        bytes  memory destinationRecipientAddress;
+        address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
+        require(_contractWhitelist[tokenAddress], "unhandled token");
 
-        (amount, lenDestinationRecipientAddress) = abi.decode(data, (uint, uint));
+        bytes memory destinationRecipientAddress;
+        (uint256 amount, uint256 lenDestinationRecipientAddress) = abi.decode(data, (uint, uint));
         destinationRecipientAddress = bytes(data[64:64 + lenDestinationRecipientAddress]);
 
         bytes20 recipientAddress;
-        address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-
         assembly {
             recipientAddress := mload(add(destinationRecipientAddress, 0x20))
         }
-
-        require(_contractWhitelist[tokenAddress], "unhandled token");
 
         if (_burnList[tokenAddress]) {
             mintERC20(tokenAddress, address(recipientAddress), amount);
@@ -139,7 +134,7 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
         if (feeType == 0) {
             uint256 feePercentage;
             (, feePercentage) = abi.decode(feeData, (uint8, uint256));
-            setFeePercentage(feePercentage);
+            _setFeePercentage(feePercentage);
         } else if (feeType == 1) {
             address tokenAddress;
             uint256 minFeeMultiplierToken;
@@ -156,18 +151,20 @@ contract ERC20HandlerPercentageFee is IDepositExecute, HandlerHelpers, ERC20Safe
     }
 
     function _calculateFee(address tokenAddress, uint8 destinationDomainID, uint256 tokenAmount) internal view returns (uint256 fee) {
-        uint256 minimalFee;
-
         fee = tokenAmount * _feePercentage / 10000;
-        minimalFee = _minFeeMultiplierToken[tokenAddress] * _minFeeMultiplierChain[destinationDomainID];
+        uint256 minimalFee = _calculateMinimumFee(tokenAddress, destinationDomainID);
 
         if (minimalFee > fee) {
             fee = minimalFee;
-            require(fee < tokenAmount, "LT minFee");
+            require(fee < tokenAmount, "< minFee");
         }
     }
 
-    function setFeePercentage(uint feePercentage) internal {
+    function _calculateMinimumFee(address tokenAddress, uint8 destinationDomainID) internal view returns (uint256 minimalFee) {
+        minimalFee = _minFeeMultiplierToken[tokenAddress] * _minFeeMultiplierChain[destinationDomainID];
+    }
+
+    function _setFeePercentage(uint feePercentage) internal {
         require(feePercentage >= 0 && feePercentage <= 10000, "invalid fee");
         _feePercentage = feePercentage;
     }

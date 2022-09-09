@@ -8,7 +8,7 @@ import "../ERC20HandlerFixedFee.sol";
     @author ChainSafe Systems.
     @notice This contract is intended to be used with the Bridge contract.
  */
-contract ERC20HandlerPercentageFeeIndirectBurn is ERC20HandlerFixedFee {
+contract ERC20HandlerFixedFeeIndirectBurn is ERC20HandlerFixedFee {
 
     constructor(address bridgeAddress) ERC20HandlerFixedFee(bridgeAddress) {}
 
